@@ -1,0 +1,25 @@
+body {
+  margin: 0;
+  padding: 0;
+  font-family: sans-serif;
+}
+
+.grid-wrap {
+	/*height: 470px;
+	width: 630px;*/
+}
+
+.grid {
+	border: 1px solid black;
+	height: 470px;
+	width: 630px;
+}
+
+.grid .col {
+	width: 8px;
+	height: 8px;
+	outline: 1px solid black;
+	float: left;
+}
+
+
