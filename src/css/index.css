@@ -16,7 +16,7 @@ body {
 	width: 770px;
 }
 
-.grid .col {
+.Cell {
 	width: 11px;
 	height: 11px;
 	border-top: 1px solid black;
@@ -25,4 +25,11 @@ body {
 	float: left;
 }
 
+.trans-live, .trans-dead {
+	/*#cc0a27*/
+	background-color: #b77780;
+}
 
+.alive {
+	background-color: #cc0a27;
+}
