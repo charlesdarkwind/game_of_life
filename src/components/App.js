@@ -7,82 +7,114 @@ class App extends Component {
     super(props)
     this.generateGrid = this.generateGrid.bind(this); 
     this.start = this.start.bind(this);
+
+    // The grid is a 2 dimensional array of rows and columns
     this.state = {
+      initialized: false,
       grid: [],
-      next: []
+      next: [],
+      height: 0,
+      width: 0
     } 
   }
 
-  generateGrid() {
-    for (let i = 0; i < 3500; i++) {
-      this.state.grid.push(
-        <Cell          
-          key={i}
-          index={i}
-          status={'dead'}
-        />)
-    }
-    return this.state.grid;
-
-    /*for (let i = 0; i < 3500; i++) {
-      this.state.grid.push(<div className="col" key={i}></div>)
-    }
-    return this.state.grid;*/
+  componentWillMount() {
+    return this.state.initialized ? null : this.generateGrid(50, 70);
   }
 
-  start() {
-    const copy = this.state.grid;
-    copy[0] = <Cell key={0} index={0} status={'alive'} />;
-    copy[90] = <Cell key={90} index={90} status={'alive'} />;
-    copy[181] = <Cell key={181} index={181} status={'alive'} />;
-    copy[110] = <Cell key={110} index={110} status={'alive'} />;
-    copy[251] = <Cell key={251} index={251} status={'alive'} />;
-    copy[321] = <Cell key={321} index={321} status={'alive'} />;
-    copy[391] = <Cell key={391} index={391} status={'alive'} />;
-    copy[461] = <Cell key={461} index={461} status={'alive'} />;
-    copy[180] = <Cell key={180} index={180} status={'alive'} />;
-    copy[110] = <Cell key={110} index={110} status={'alive'} />;
-    copy[250] = <Cell key={250} index={250} status={'alive'} />;
-    copy[320] = <Cell key={320} index={320} status={'alive'} />;
-    copy[390] = <Cell key={390} index={390} status={'alive'} />;
-    copy[460] = <Cell key={460} index={460} status={'alive'} />;
+  generateGrid(height, width) {
+    const grid = [];
+    for (let i = 0; i < height; i++) {
+      grid.push([]);
+      for (let j = 0; j < width; j++) {
+        grid[i].push(
+          <Cell          
+            key={[i, j]}
+            id={[i, j]}
+            status={'dead'}
+          />);
+      }    
+    }
+
     this.setState({
-      grid: copy
+      initialized: true,
+      grid,
+      height,
+      width
     });
   }
 
+  start() {
+    console.log(this.determineNeighbours([50, 70]));
+  }
+
   determineNeighbours(cell) {
-    // cell must be the index of the cell between 0 and 3499
-    const neighbours = {
-      '1': -72,
-      '2': -71,
-      '3': -70,
-      '4': -1,
-      '5': 1,
-      '6': 69,
-      '7': 70,
-      '8': 71
-    };
-    const arr = [];
-    let i = 0;
-    for (const neighbour in neighbours) {
-      let num = cell + parseInt(neighbours[i];
-      if (num >= 0 && num <= 3499) {
-        arr.push(num);
-      } else if (num < 0) {
-        arr.push()
-      }
-      
-      i++;
-    } 
-  }
 
-  makeLiveCell() {
+    // Determines the surrounding neighbours of a cell
+    // and "wraps" the edges of the grid resulting 
+    // in an infinite grid effect.
 
-  }
+    //  0 1 2
+    //  3   4
+    //  5 6 7
 
-  makeDeadCell() {
+    const { height, width } = this.state;
+    const row = cell[0];
+    const col = cell[1];
 
+    const neighbourTopRow = () => row - 1 === -1 ? height - 1 : row - 1;
+    const neighbourBotRow = () => row + 1 === height + 1 ? 0 : row + 1;
+    const neighbourLeftCol = () => col - 1 === -1 ? width : col - 1;
+    const neighbourRightCol = () => col + 1 === width + 1 ? 0 : col + 1;
+
+    const arr = [
+      [neighbourTopRow(), neighbourLeftCol()], 
+      [neighbourTopRow(), col], 
+      [neighbourTopRow(), neighbourRightCol()], 
+      [row, neighbourLeftCol()], 
+      [row, neighbourRightCol()], 
+      [neighbourBotRow(), neighbourLeftCol()], 
+      [neighbourBotRow(), col], 
+      [neighbourBotRow(), neighbourRightCol()]
+    ];
+
+    /*
+    switch(i) {
+      case 0:
+      // row - 1, col - 1 
+        arr.push([neighbourTopRow(), neighbourLeftCol()]);
+        break;
+      case 1:
+      // row - 1, same col
+        arr.push([neighbourTopRow(), col]);
+        break;
+      case 2:
+      // row - 1, col + 1
+        arr.push([neighbourTopRow(), neighbourRightCol()]);
+        break;
+      case 3:
+      // same row, col - 1
+        arr.push([row, neighbourLeftCol()]);
+        break;
+      case 4:
+        // same row, col + 1
+        arr.push([row, neighbourRightCol()]);
+        break;
+      case 5:
+        // row + 1, col - 1
+        arr.push([neighbourBotRow(), neighbourLeftCol()]);
+        break;
+      case 6:
+        // row + 1, same col
+        arr.push([neighbourBotRow(), col]);
+        break;
+      case 7:
+        // row + 1, col + 1
+        arr.push([neighbourBotRow(), neighbourRightCol()]);
+        break;
+    }
+    */
+    return arr;
   }
 
   render() {  
@@ -93,8 +125,7 @@ class App extends Component {
         <div className="App-body">
           <div className="grid-wrap">
             <div className="grid">
-              {this.state.grid[0] ? this.state.grid : this.generateGrid()}
-              {}
+              {this.state.grid}
             </div>
           </div>
         </div>

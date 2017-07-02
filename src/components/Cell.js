@@ -9,9 +9,8 @@ class Cell extends Component {
     }
   }
   render() {  
-
     return (     
-      <div className={`Cell ${this.props.status}`}></div>
+      <div className={`Cell ${this.props.status}` } onClick={() => console.log(this.props.id)}></div>
     );
   }
 }
