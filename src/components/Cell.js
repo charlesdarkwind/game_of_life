@@ -5,22 +5,20 @@ class Cell extends Component {
   constructor(props) {
     super(props)
     this.handleClick = this.handleClick.bind(this);
-    this.state = {
-      status: this.props.status // dead, alive, trans-live, trans-dead 
-    }
   }
 
   handleClick() {
-    const next = this.state.status === 'dead' ? 'alive' : 'dead';
-    //this.props.addLivingCell(this.props.id);
-    this.setState({
-      status: next
-    });
+    const { status } = this.props;
+    if (status === 'dead') {
+      this.props.addLivingCell(this.props.id);
+    } else if (status === 'alive') {
+      this.props.removeLivingCell(this.props.id);
+    }
   }
 
   render() {  
     return (     
-      <div className={`Cell ${this.state.status}` } onClick={() => this.handleClick()}></div>
+      <div className={`Cell ${this.props.status}`} onClick={() => this.handleClick()}></div>
     );
   }
 }

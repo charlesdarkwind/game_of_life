@@ -7,14 +7,17 @@ class App extends Component {
     super(props)
     this.generateGrid = this.generateGrid.bind(this); 
     this.updateGrid = this.updateGrid.bind(this);
-    this.start = this.start.bind(this);
+    //this.start = this.start.bind(this);
     this.newGeneration = this.newGeneration.bind(this);
+    this.addLivingCell = this.addLivingCell.bind(this);
+    this.removeLivingCell = this.removeLivingCell.bind(this);
+    this.addCell = this.addCell.bind(this);
 
     // The grid is a 2 dimensional array of rows and columns
     this.state = {
       initialized: false,
       grid: [],
-      nextGrid: [],
+      next: [],
       livingCells: [],
       height: 0,
       width: 0
@@ -25,17 +28,28 @@ class App extends Component {
     this.updateGrid();
   }
 
+  componentDidMount() {
+    this.timerID = setInterval(
+      () => this.tick(),
+      400
+    );
+  }
+
+  tick() {
+    console.log('tick');
+    const nextData = this.newGeneration(50, 70);
+    this.setState({
+      grid: nextData.next,
+      livingCells: nextData.nextLivingGen
+    });
+  }
+
   generateGrid(height, width) {
     const grid = [];
     for (let i = 0; i < height; i++) {
       grid.push([]);
       for (let j = 0; j < width; j++) {
-        grid[i].push(
-          <Cell          
-            key={[i, j]}
-            id={[i, j]}
-            status={'dead'}
-          />);
+        grid[i].push(this.addCell(i, j, 'dead'));
       }    
     }
     this.setState({
@@ -50,20 +64,65 @@ class App extends Component {
     return this.state.initialized ? this.state.grid : this.generateGrid(50, 70);
   }
 
-  start() {
-    const copy = this.state.grid;
-    copy[30][30] = <Cell          
-            key={[30, 30]}
-            id={[30, 30]}
-            status={'alive'}
-          />;
-    this.setState({
-      grid: copy
+  addCell(row, col, status) {
+    return (
+      <Cell          
+            key={[row, col,]}
+            id={[row, col,]}
+            addLivingCell={this.addLivingCell}
+            removeLivingCell={this.removeLivingCell}
+            status={status}
+          />
+    );
+  }
+
+  // newGeneration(height, width) {
+
+  // }
+
+  newGeneration(height, width) {
+    const { livingCells } = this.state;
+    const next = [];
+    const nextLivingGen = [];
+
+    for (let i = 0; i < height; i++) {
+      next.push([]);
+      for (let j = 0; j < width; j++) {  
+        // Creating next state array   
+        const cell = [i, j];
+        let status = '';
+        const neighbours = this.determineNeighbours(cell);
+        let liveNeighboursCount = 0;
+
+        neighbours.forEach(neigh => livingCells.forEach(val => {
+          if (neigh[0] === val[0] && neigh[1] === val[1]) liveNeighboursCount++;
+        }));
+
+        if (livingCells.some((x) => x[0] === i && x[1] === j) && (liveNeighboursCount === 2 || liveNeighboursCount === 3)) {
+          nextLivingGen.push(cell);
+          status = 'alive';    
+        } else if (!livingCells.some((x) => x[0] === i && x[1] === j) && liveNeighboursCount === 3) {
+          nextLivingGen.push(cell);
+          status = 'alive'; 
+        } else {
+          status = 'dead';
+        }
+        next[i].push(this.addCell(i, j, status));
+      }    
+    }
+    return ({
+      next,
+      nextLivingGen
     });
   }
 
-  determineNeighbours(cell) {
+  // start() {
+  //   setInterval(function() {
+  //     this.newGeneration(50, 70);
+  //   }, 500);
+  // }
 
+  determineNeighbours(cell) {
     // Determines the surrounding neighbours of a cell
     // and "wraps" the edges of the grid resulting 
     // in an infinite grid effect
@@ -71,7 +130,6 @@ class App extends Component {
     //  0 1 2
     //  3   4
     //  5 6 7
-
     const { height, width } = this.state;
     const row = cell[0];
     const col = cell[1];
@@ -93,12 +151,27 @@ class App extends Component {
     ];
   }
 
-  newGeneration() {
-
+  addLivingCell(id) {
+    const { livingCells, grid } = this.state;
+    grid[id[0]][id[1]] = this.addCell(id[0], id[1], 'alive');
+    livingCells.push(id);
+    this.setState({
+      livingCells,
+      grid
+    });
   }
 
-  addLivingCell() {
-
+  removeLivingCell(id) {
+    const { livingCells, grid } = this.state;
+    const index = livingCells.map(x => {
+      return x[0] === id[0] && x[1] === id[1] ? livingCells.indexOf(x) : null;
+    });
+    grid[id[0]][id[1]] = this.addCell(id[0], id[1], 'dead');
+    livingCells.splice(index, 1);
+    this.setState({
+      livingCells,
+      grid
+    });
   }
 
   render() {  
@@ -115,7 +188,7 @@ class App extends Component {
         </div>
         <div className="App-footer">
           <button className="start" onClick={() => this.start()}>Start</button>
-          <button className="newGenButton" onClick={() => this.newGeneration()}>New generation</button>
+          <button className="newGenButton" onClick={() => this.newGeneration(50, 70)}>New generation</button>
         </div>
       </div>
     );
