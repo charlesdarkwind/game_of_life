@@ -18,7 +18,7 @@ class App extends Component {
       initialized: false,
       grid: [],
       next: [],
-      livingCells: [],
+      livingCells: [[28,29],[28,30],[28,31]],
       height: 0,
       width: 0
     }; 
@@ -31,11 +31,11 @@ class App extends Component {
   componentDidMount() {
     this.timerID = setInterval(
       () => this.tick(),
-      400
+      300
     );
   }
 
-  tick() {
+  tick() {   
     console.log('tick');
     const nextData = this.newGeneration(50, 70);
     this.setState({
@@ -45,6 +45,7 @@ class App extends Component {
   }
 
   generateGrid(height, width) {
+
     const grid = [];
     for (let i = 0; i < height; i++) {
       grid.push([]);
@@ -52,6 +53,7 @@ class App extends Component {
         grid[i].push(this.addCell(i, j, 'dead'));
       }    
     }
+
     this.setState({
       initialized: true,
       grid,
@@ -76,40 +78,44 @@ class App extends Component {
     );
   }
 
-  // newGeneration(height, width) {
-
-  // }
-
   newGeneration(height, width) {
+
     const { livingCells } = this.state;
     const next = [];
     const nextLivingGen = [];
 
+     // Creating next state array   
     for (let i = 0; i < height; i++) {
       next.push([]);
       for (let j = 0; j < width; j++) {  
-        // Creating next state array   
+       
         const cell = [i, j];
         let status = '';
-        const neighbours = this.determineNeighbours(cell);
+        const neighbours = this.determineNeighbours(i, j);
         let liveNeighboursCount = 0;
 
-        neighbours.forEach(neigh => livingCells.forEach(val => {
+        // Count number of live cells in the neighbours
+        neighbours.map(neigh => livingCells.map(val => {
           if (neigh[0] === val[0] && neigh[1] === val[1]) liveNeighboursCount++;
         }));
 
+        // If alive & 2 or 3 live neighbours then stay alive
         if (livingCells.some((x) => x[0] === i && x[1] === j) && (liveNeighboursCount === 2 || liveNeighboursCount === 3)) {
           nextLivingGen.push(cell);
-          status = 'alive';    
+          status = 'alive';  
+          
+          // If dead & 3 live neighbours then become alive
         } else if (!livingCells.some((x) => x[0] === i && x[1] === j) && liveNeighboursCount === 3) {
           nextLivingGen.push(cell);
           status = 'alive'; 
         } else {
           status = 'dead';
         }
+
         next[i].push(this.addCell(i, j, status));
       }    
     }
+
     return ({
       next,
       nextLivingGen
@@ -117,38 +123,35 @@ class App extends Component {
   }
 
   // start() {
-  //   setInterval(function() {
-  //     this.newGeneration(50, 70);
-  //   }, 500);
+
   // }
 
-  determineNeighbours(cell) {
+  determineNeighbours(row, col) {
     // Determines the surrounding neighbours of a cell
     // and "wraps" the edges of the grid resulting 
-    // in an infinite grid effect
+    // in an infinite (torroidal) grid effect.
 
     //  0 1 2
     //  3   4
     //  5 6 7
-    const { height, width } = this.state;
-    const row = cell[0];
-    const col = cell[1];
 
-    const neighbourTopRow = () => row - 1 === -1 ? height - 1 : row - 1;
-    const neighbourBotRow = () => row + 1 === height + 1 ? 0 : row + 1;
-    const neighbourLeftCol = () => col - 1 === -1 ? width : col - 1;
-    const neighbourRightCol = () => col + 1 === width + 1 ? 0 : col + 1;
+    const { grid, height, width } = this.state;
 
-    return [
-      [neighbourTopRow(), neighbourLeftCol()], 
-      [neighbourTopRow(), col], 
-      [neighbourTopRow(), neighbourRightCol()], 
-      [row, neighbourLeftCol()], 
-      [row, neighbourRightCol()], 
-      [neighbourBotRow(), neighbourLeftCol()], 
-      [neighbourBotRow(), col], 
-      [neighbourBotRow(), neighbourRightCol()]
-    ];
+    // The modulo operator does all the job
+    const getElement = (row, col) => {
+      return [((row % 50) + 50) % 50,((col % 70) + 70) % 70];
+    }
+
+        return ([
+      getElement(row - 1, col - 1), 
+      getElement(row - 1, col), 
+      getElement(row - 1, col + 1), 
+      getElement(row, col - 1), 
+      getElement(row, col + 1), 
+      getElement(row + 1, col - 1), 
+      getElement(row + 1, col), 
+      getElement(row + 1, col + 1)
+    ]);
   }
 
   addLivingCell(id) {
