@@ -86,11 +86,13 @@ class App extends Component {
 
   newGeneration(height, width) {
 
-    const { livingCells } = this.state;
+    const { livingCells, grid } = this.state;
     const activeCells = [...livingCells, ...this.state.activeCells];
     const next = [];
     const nextLiving = [];
     const nextActive = [];
+
+    // 1. Check if can replace .some for looking up the status of the cell
 
      // Creating next state array, livingCells and activeCells and returns to tick()
     activeCells.map(cell => {
@@ -100,6 +102,12 @@ class App extends Component {
         const neighbours = this.determineNeighbours(cell[0], cell[1]);
         let liveNeighboursCount = 0;
 
+        // If the state of the cell changed: push it and its 8 neighbours 
+        const addToNextActive = (cell) => {
+          nextActive.push(this.addCell(cell[0], cell[1], status));
+          nextActive.push(neighbours.map(cell => grid[cell]));
+        };
+
         // Count number of live cells in the neighbours
         neighbours.map(neigh => livingCells.map(val => {
           if (neigh[0] === val[0] && neigh[1] === val[1]) liveNeighboursCount++;
@@ -108,19 +116,15 @@ class App extends Component {
         // If alive & 2 or 3 live neighbours then stay alive
         if (livingCells.some((x) => x[0] === cell[0] && x[1] === cell[1]) && (liveNeighboursCount === 2 || liveNeighboursCount === 3)) {
           nextLiving.push(cell);
-          status = 'alive';  
-          
+          nextActive.push(this.addCell(cell[0], cell[1], 'alive')); 
           // If dead & 3 live neighbours then become alive
         } else if (!livingCells.some((x) => x[0] === cell[0] && x[1] === cell[1]) && liveNeighboursCount === 3) {
           nextLiving.push(cell);
-          status = 'alive'; 
+          nextActive.push(this.addCell(cell[0], cell[1], 'alive'));
         } else {
           nextActive.push(cell);
           status = 'dead';
         }
-
-        // nextLiving and nextActive will constitute state.activeCell
-        nextActive.push(this.addCell(cell[0], cell[1], status))
 
         // All of the cells for the next tick with their new status
         //next.push(this.addCell(cell[0], cell[1], status));    
@@ -160,7 +164,7 @@ class App extends Component {
     // The modulo operator does all the job
     const getElement = (row, col) => {
       return [((row % 50) + 50) % 50,((col % 70) + 70) % 70];
-    }
+    };
 
         return ([
       getElement(row - 1, col - 1), 
@@ -185,17 +189,15 @@ class App extends Component {
   }
 
   removeLivingCell(id) {
-    const { livingCells, grid, activeCells } = this.state;
+    const { livingCells, grid } = this.state;
     const index = livingCells.map(x => {
       return x[0] === id[0] && x[1] === id[1] ? livingCells.indexOf(x) : null;
     });
     grid[id[0]][id[1]] = this.addCell(id[0], id[1], 'dead');
     livingCells.splice(index, 1);
-    activeCells.push(id);
     this.setState({
       livingCells,
-      grid,
-      activeCells
+      grid
     });
   }
 
