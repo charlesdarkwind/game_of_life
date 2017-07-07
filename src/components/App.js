@@ -7,45 +7,50 @@ class App extends Component {
     super(props)
     this.generateGrid = this.generateGrid.bind(this); 
     this.updateGrid = this.updateGrid.bind(this);
-    //this.start = this.start.bind(this);
+    this.start = this.start.bind(this);
+    this.pause = this.pause.bind(this);
     this.newGeneration = this.newGeneration.bind(this);
     this.addLivingCell = this.addLivingCell.bind(this);
     this.removeLivingCell = this.removeLivingCell.bind(this);
     this.addCell = this.addCell.bind(this);
-
-    // The grid is a 2 dimensional array of rows and columns
     this.state = {
       initialized: false,
+      ticking: false,
+      activeCells: [],
       grid: [],
       next: [],
-      livingCells: [[28,29],[28,30],[28,31]],
+      livingCells: [],
       height: 0,
       width: 0
     }; 
   }
-
+//[28,29],[28,30],[28,31]
   componentWillMount() {
     this.updateGrid();
   }
 
   componentDidMount() {
+    /*
     this.timerID = setInterval(
       () => this.tick(),
       300
     );
+    */
   }
 
   tick() {   
-    console.log('tick');
-    const nextData = this.newGeneration(50, 70);
-    this.setState({
-      grid: nextData.next,
-      livingCells: nextData.nextLivingGen
-    });
+    if (this.state.ticking) {
+      console.log('tick');
+      const nextData = this.newGeneration(50, 70);
+      this.setState({
+        grid: nextData.next,
+        livingCells: nextData.nextLiving,
+        activeCells: nextData.nextActive
+      });
+    }
   }
 
   generateGrid(height, width) {
-
     const grid = [];
     for (let i = 0; i < height; i++) {
       grid.push([]);
@@ -55,10 +60,11 @@ class App extends Component {
     }
 
     this.setState({
-      initialized: true,
+      initialized: true,    
       grid,
       height,
-      width
+      width,
+      nextActive: grid
     });
   }
 
@@ -81,17 +87,17 @@ class App extends Component {
   newGeneration(height, width) {
 
     const { livingCells } = this.state;
+    const activeCells = [...livingCells, ...this.state.activeCells];
     const next = [];
-    const nextLivingGen = [];
+    const nextLiving = [];
+    const nextActive = [];
 
-     // Creating next state array   
-    for (let i = 0; i < height; i++) {
-      next.push([]);
-      for (let j = 0; j < width; j++) {  
+     // Creating next state array, livingCells and activeCells and returns to tick()
+    activeCells.map(cell => {
        
-        const cell = [i, j];
+        // console.log(activeCells);
         let status = '';
-        const neighbours = this.determineNeighbours(i, j);
+        const neighbours = this.determineNeighbours(cell[0], cell[1]);
         let liveNeighboursCount = 0;
 
         // Count number of live cells in the neighbours
@@ -100,31 +106,45 @@ class App extends Component {
         }));
 
         // If alive & 2 or 3 live neighbours then stay alive
-        if (livingCells.some((x) => x[0] === i && x[1] === j) && (liveNeighboursCount === 2 || liveNeighboursCount === 3)) {
-          nextLivingGen.push(cell);
+        if (livingCells.some((x) => x[0] === cell[0] && x[1] === cell[1]) && (liveNeighboursCount === 2 || liveNeighboursCount === 3)) {
+          nextLiving.push(cell);
           status = 'alive';  
           
           // If dead & 3 live neighbours then become alive
-        } else if (!livingCells.some((x) => x[0] === i && x[1] === j) && liveNeighboursCount === 3) {
-          nextLivingGen.push(cell);
+        } else if (!livingCells.some((x) => x[0] === cell[0] && x[1] === cell[1]) && liveNeighboursCount === 3) {
+          nextLiving.push(cell);
           status = 'alive'; 
         } else {
+          nextActive.push(cell);
           status = 'dead';
         }
 
-        next[i].push(this.addCell(i, j, status));
-      }    
-    }
+        // nextLiving and nextActive will constitute state.activeCell
+        nextActive.push(this.addCell(cell[0], cell[1], status))
+
+        // All of the cells for the next tick with their new status
+        //next.push(this.addCell(cell[0], cell[1], status));    
+    });
 
     return ({
       next,
-      nextLivingGen
+      nextLiving,
+      nextActive
     });
   }
 
-  // start() {
+  start() {
+    this.setState({
+      ticking: true
+    });
+  }
 
-  // }
+  pause() {
+    console.log('pause');
+    this.setState({
+      ticking: false
+    });
+  }
 
   determineNeighbours(row, col) {
     // Determines the surrounding neighbours of a cell
@@ -160,20 +180,22 @@ class App extends Component {
     livingCells.push(id);
     this.setState({
       livingCells,
-      grid
+      grid     
     });
   }
 
   removeLivingCell(id) {
-    const { livingCells, grid } = this.state;
+    const { livingCells, grid, activeCells } = this.state;
     const index = livingCells.map(x => {
       return x[0] === id[0] && x[1] === id[1] ? livingCells.indexOf(x) : null;
     });
     grid[id[0]][id[1]] = this.addCell(id[0], id[1], 'dead');
     livingCells.splice(index, 1);
+    activeCells.push(id);
     this.setState({
       livingCells,
-      grid
+      grid,
+      activeCells
     });
   }
 
@@ -191,6 +213,7 @@ class App extends Component {
         </div>
         <div className="App-footer">
           <button className="start" onClick={() => this.start()}>Start</button>
+          <button className="pause" onClick={() => this.pause()}>Pause</button>
           <button className="newGenButton" onClick={() => this.newGeneration(50, 70)}>New generation</button>
         </div>
       </div>
